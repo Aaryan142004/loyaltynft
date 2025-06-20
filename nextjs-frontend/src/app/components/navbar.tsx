@@ -1,13 +1,20 @@
 'use client';
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface NavbarProps {
   onDocsClick?: () => void;
- onServicesClick?: () => void;
+  onServicesClick?: () => void;
 }
 
-export default function Navbar({ onDocsClick,onServicesClick }: NavbarProps) {
+export default function Navbar({ onDocsClick, onServicesClick }: NavbarProps) {
   const router = useRouter();
   const [walletAddress, setWalletAddress] = useState('');
   const [email, setEmail] = useState('');
@@ -105,7 +112,7 @@ export default function Navbar({ onDocsClick,onServicesClick }: NavbarProps) {
             <button onClick={() => setShowLoginModal(true)} className="hover:text-white">Login</button>
             <button onClick={() => setShowSignupModal(true)} className="hover:text-white">Signup</button>
             <button onClick={onDocsClick} className="hover:text-white">Docs</button>
-             <button onClick={onServicesClick} className="hover:text-white">Services</button>
+            <button onClick={onServicesClick} className="hover:text-white">Services</button>
             <button onClick={connectWallet} className="hover:text-white">
               {walletAddress ? `🔗 ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
             </button>
