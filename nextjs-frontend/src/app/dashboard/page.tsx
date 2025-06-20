@@ -410,10 +410,8 @@ export default function UserDashboardClient() {
   return (
     <main className="min-h-screen bg-black text-white">
       <Navbar />
-
       <div className="max-w-5xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-6">Welcome to Your Loyalty Dashboard</h1>
-
         {showSuccess && (
           <div className="mb-6 p-4 rounded-lg bg-green-600 text-white font-semibold shadow-lg">
             ✅ Payment successful! Points request created and will be approved shortly.
@@ -424,12 +422,10 @@ export default function UserDashboardClient() {
             ❌ Payment cancelled. Please try again.
           </div>
         )}
-
         <div className="bg-gray-800 p-4 rounded-lg mb-8">
           <p><strong>Wallet:</strong> {wallet || "Not connected"}</p>
           <p><strong>Email:</strong> {email || "Not available"}</p>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
           {features.map((feature, idx) => (
             <div
