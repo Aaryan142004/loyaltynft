@@ -5,7 +5,7 @@ package.json
 
 server/node_modules/
 server/package-lock.json
-server/package.json
+!server/package.json
 
 contract/artifacts/
 contract/cache/
