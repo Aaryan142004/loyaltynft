@@ -262,7 +262,7 @@
 // }
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "../components/navbar";
 import axios from "axios";
@@ -314,9 +314,7 @@ export default function UserDashboardClient() {
     try {
       const token = sessionStorage.getItem("token");
       const res = await axios.get("http://localhost:4000/api/user/nft-status", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setNftData(res.data);
     } catch (err) {
@@ -354,7 +352,6 @@ export default function UserDashboardClient() {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const data = await res.json();
       if (res.ok) {
         setMintMessage("✅ Mint request sent successfully!");
@@ -377,7 +374,6 @@ export default function UserDashboardClient() {
 
     try {
       const token = sessionStorage.getItem("token");
-
       const res = await fetch("http://localhost:4000/api/user/create-checkout", {
         method: "POST",
         headers: {
@@ -388,7 +384,6 @@ export default function UserDashboardClient() {
       });
 
       const data = await res.json();
-
       if (res.ok && data.url) {
         window.location.href = data.url;
       } else {
@@ -412,27 +407,15 @@ export default function UserDashboardClient() {
       <Navbar />
       <div className="max-w-5xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold mb-6">Welcome to Your Loyalty Dashboard</h1>
-        {showSuccess && (
-          <div className="mb-6 p-4 rounded-lg bg-green-600 text-white font-semibold shadow-lg">
-            ✅ Payment successful! Points request created and will be approved shortly.
-          </div>
-        )}
-        {showCancel && (
-          <div className="mb-6 p-4 rounded-lg bg-red-600 text-white font-semibold shadow-lg">
-            ❌ Payment cancelled. Please try again.
-          </div>
-        )}
+        {showSuccess && <div className="mb-6 p-4 rounded-lg bg-green-600 text-white font-semibold shadow-lg">✅ Payment successful! Points request created and will be approved shortly.</div>}
+        {showCancel && <div className="mb-6 p-4 rounded-lg bg-red-600 text-white font-semibold shadow-lg">❌ Payment cancelled. Please try again.</div>}
         <div className="bg-gray-800 p-4 rounded-lg mb-8">
           <p><strong>Wallet:</strong> {wallet || "Not connected"}</p>
           <p><strong>Email:</strong> {email || "Not available"}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
           {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="bg-white/10 border border-gray-700 p-6 rounded-lg hover:border-indigo-500 hover:shadow-xl transition-all cursor-pointer"
-              onClick={() => handleFeatureClick(feature.title)}
-            >
+            <div key={idx} className="bg-white/10 border border-gray-700 p-6 rounded-lg hover:border-indigo-500 hover:shadow-xl transition-all cursor-pointer" onClick={() => handleFeatureClick(feature.title)}>
               <h2 className="text-xl font-semibold mb-2">{feature.title}</h2>
               <p className="text-gray-400">{feature.description}</p>
             </div>
@@ -453,10 +436,7 @@ export default function UserDashboardClient() {
               ) : (
                 <p className="text-center">No NFT found for your wallet.</p>
               )}
-              <button className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => setShowNFTModal(false)}>
-                Close
-              </button>
+              <button className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded" onClick={() => setShowNFTModal(false)}>Close</button>
             </div>
           </div>
         )}
@@ -466,16 +446,10 @@ export default function UserDashboardClient() {
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
             <div className="bg-gray-900 p-6 rounded-xl w-full max-w-md">
               <h2 className="text-2xl font-bold mb-4 text-center">Request Loyalty NFT Mint</h2>
-              <button onClick={handleRequestMint}
-                className="bg-indigo-600 hover:bg-indigo-700 w-full py-2 rounded font-semibold mb-4">
-                Request Mint
-              </button>
+              <button onClick={handleRequestMint} className="bg-indigo-600 hover:bg-indigo-700 w-full py-2 rounded font-semibold mb-4">Request Mint</button>
               {mintMessage && <p className="text-green-400 text-center">{mintMessage}</p>}
               {mintError && <p className="text-red-400 text-center">{mintError}</p>}
-              <button className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-                onClick={() => setShowMintModal(false)}>
-                Close
-              </button>
+              <button className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded" onClick={() => setShowMintModal(false)}>Close</button>
             </div>
           </div>
         )}
@@ -486,18 +460,10 @@ export default function UserDashboardClient() {
             <div className="bg-gray-900 p-6 rounded-xl w-full max-w-md">
               <h2 className="text-2xl font-bold mb-4 text-center">Make a Payment</h2>
               <label className="block mb-2 font-medium">Amount (USD)</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount e.g. 100"
-                className="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 mb-4" />
-              <button onClick={handlePayment} disabled={loading}
-                className="bg-indigo-600 w-full py-2 rounded hover:bg-indigo-700 transition-all">
-                {loading ? "Processing..." : "Pay with Stripe"}
-              </button>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount e.g. 100" className="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600 mb-4" />
+              <button onClick={handlePayment} disabled={loading} className="bg-indigo-600 w-full py-2 rounded hover:bg-indigo-700 transition-all">{loading ? "Processing..." : "Pay with Stripe"}</button>
               {payMessage && <p className="mt-4 text-sm text-center text-red-400">{payMessage}</p>}
-              <button className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-                onClick={() => setShowPaymentModal(false)}>
-                Close
-              </button>
+              <button className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded" onClick={() => setShowPaymentModal(false)}>Close</button>
             </div>
           </div>
         )}
