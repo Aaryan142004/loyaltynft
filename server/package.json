@@ -1,0 +1,16 @@
+{
+  "name": "loyaltynft-backend",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.1",
+    "stripe": "^12.5.0",
+    "web3": "^1.10.0"
+  }
+}
