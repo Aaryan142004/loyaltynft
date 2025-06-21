@@ -3,29 +3,33 @@ require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // include stripe here
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
-const Request = require('./models/Request'); // needed for webhook
+const Request = require('./models/Request');
 
 const app = express();
 
-// ✅ Enable CORS
-app.use(cors());
+// ✅ Enable CORS for production frontend
+app.use(cors({
+  origin: 'https://loyaltynft.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 
-// ✅ Stripe webhook route with raw body parser (must come BEFORE express.json)
+// ✅ Stripe webhook route (must be before express.json())
 app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
-  let event;
   try {
-    event = stripe.webhooks.constructEvent(
+    const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
     console.log('✅ Webhook verified:', event.type);
 
     if (event.type === 'checkout.session.completed') {
@@ -60,16 +64,18 @@ app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (
 // ✅ Use JSON for all other routes
 app.use(express.json());
 
-// ✅ Connect MongoDB
+// ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB error:', err));
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ API Routes
+// ✅ API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ✅ Start Server
+// ✅ Start server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

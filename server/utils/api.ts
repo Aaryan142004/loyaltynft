@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API || 'http://localhost:4000/api';
+const API = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000/api';
 
 export const loginUser = async (email: string, password: string) => {
   const res = await fetch(`${API}/auth/login`, {
