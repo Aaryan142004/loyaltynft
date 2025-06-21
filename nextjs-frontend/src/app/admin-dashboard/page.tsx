@@ -1,6 +1,7 @@
-"use client";
+'use client';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getAdminRequests, approveRequest } from "@/utils/api"; // 👈 import API helpers
 
 export default function AdminDashboardPage() {
   const [requests, setRequests] = useState([]);
@@ -22,12 +23,7 @@ export default function AdminDashboardPage() {
 
   const fetchRequests = async (token: string, type: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/requests/${type}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch requests");
-      const data = await res.json();
+      const data = await getAdminRequests(token, type); // 👈 use API helper
       setRequests(data);
     } catch (err) {
       console.error(err);
@@ -42,25 +38,12 @@ export default function AdminDashboardPage() {
     if (!token) return alert("Admin session expired. Please login again.");
 
     try {
-      const res = await fetch("http://localhost:4000/api/admin/approve", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ requestId: id }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("✅ Request approved");
-        fetchRequests(token, type);
-      } else {
-        alert(data.error || "Approval failed");
-      }
+      const res = await approveRequest(token, id); // 👈 use API helper
+      alert("✅ Request approved");
+      fetchRequests(token, type);
     } catch (err) {
       console.error(err);
-      alert("Server error");
+      alert("Approval failed");
     }
   };
 
