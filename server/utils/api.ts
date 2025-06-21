@@ -1,5 +1,8 @@
 const API = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000/api';
 
+// ✅ Log the API base to verify in browser console
+console.log('🚀 API base:', API);
+
 export const loginUser = async (email: string, password: string) => {
   const res = await fetch(`${API}/auth/login`, {
     method: 'POST',
