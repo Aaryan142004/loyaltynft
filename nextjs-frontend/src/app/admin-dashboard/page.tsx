@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAdminRequests, approveRequest } from "@/utils/api"; // 👈 import API helpers
+import { getAdminRequests, approveRequest } from "../utils/api"; // 👈 import API helpers
 
 export default function AdminDashboardPage() {
   const [requests, setRequests] = useState([]);

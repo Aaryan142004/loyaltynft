@@ -82,7 +82,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createCheckoutSession } from '@/utils/api';
+import { createCheckoutSession } from '../utils/api';
 
 export default function PaymentPage() {
   const router = useRouter();

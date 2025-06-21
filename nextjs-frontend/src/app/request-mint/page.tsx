@@ -53,7 +53,8 @@
 // }
 "use client";
 import { useState, useEffect } from "react";
-import { requestMint } from "@/utils/api";
+import { requestMint } from '../utils/api';
+
 
 export default function RequestMintPage() {
   const [status, setStatus] = useState("");
