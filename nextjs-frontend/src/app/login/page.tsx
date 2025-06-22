@@ -99,6 +99,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Auto-redirect if already logged in
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const role = sessionStorage.getItem("role");
@@ -114,16 +115,27 @@ export default function LoginPage() {
 
     try {
       const data = await loginUser(email, password);
-      if (data.token) {
+      console.log("🧪 Login Response:", data);
+
+      if (data && data.token && data.role) {
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("role", data.role);
-        sessionStorage.setItem("email", data.email);
-        sessionStorage.setItem("wallet", data.wallet);
+        sessionStorage.setItem("email", data.email || "");
+        sessionStorage.setItem("wallet", data.wallet || "");
+
+        console.log("✅ Session values set:");
+        console.log("token:", sessionStorage.getItem("token"));
+        console.log("role:", sessionStorage.getItem("role"));
+        console.log("email:", sessionStorage.getItem("email"));
+        console.log("wallet:", sessionStorage.getItem("wallet"));
+
         router.push(data.role === "admin" ? "/admin-dashboard" : "/dashboard");
       } else {
-        setError(data.error || "Login failed");
+        console.error("❌ Invalid login response:", data);
+        setError(data?.error || "Login failed");
       }
     } catch (err) {
+      console.error("❌ Server error:", err);
       setError("Server error");
     } finally {
       setLoading(false);
