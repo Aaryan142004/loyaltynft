@@ -52,7 +52,7 @@ app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (
 
     res.status(200).json({ received: true });
   } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).send(Webhook Error: ${err.message});
   }
 });
 
@@ -72,6 +72,5 @@ app.use('/api/admin', adminRoutes);
 // ✅ Server port (important for Render!)
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(🚀 Server running on port ${PORT});
 });
-  
