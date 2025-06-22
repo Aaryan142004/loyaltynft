@@ -24,7 +24,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Stripe webhook first (raw body)
+// ✅ Stripe webhook: raw body ONLY for this route
 app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
@@ -52,25 +52,33 @@ app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (
 
     res.status(200).json({ received: true });
   } catch (err) {
-    return res.status(400).send(Webhook Error: ${err.message});
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
 
 // ✅ JSON parser (after webhook)
 app.use(express.json());
 
-// ✅ MongoDB connection
+// ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ API routes
+// ✅ Log loaded envs for debugging (optional)
+console.log('✅ Backend ENV loaded:', {
+  PORT: process.env.PORT,
+  MONGO_URI: !!process.env.MONGO_URI,
+  STRIPE_KEY: !!process.env.STRIPE_SECRET_KEY,
+  RENDER: !!process.env.RENDER,
+});
+
+// ✅ API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ✅ Server port (important for Render!)
+// ✅ Server Start (for Render or local)
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(🚀 Server running on port ${PORT});
+  console.log(`🚀 Server running on port ${PORT}`);
 });
