@@ -1,10 +1,5 @@
-// ✅ Throw error if backend URL isn't set (helps during deployment)
-if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
-  throw new Error("❌ NEXT_PUBLIC_BACKEND_URL is not defined. Make sure it's set in Vercel and redeploy the frontend.");
-}
-
-// ✅ Base URL for all backend API calls
-const API = process.env.NEXT_PUBLIC_BACKEND_URL;
+// ✅ Hardcoded API base for production deployment
+const API = "https://loyaltynft.onrender.com/api";
 console.log('🚀 API base:', API);
 
 // ✅ User login
