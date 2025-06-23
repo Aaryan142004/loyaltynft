@@ -1,6 +1,8 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { requestRewardPoints } from '../utils/api';
 
 export default function RequestRewardPage() {
   const router = useRouter();
@@ -24,32 +26,29 @@ export default function RequestRewardPage() {
     }
   }, [router]);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      setMessage("❌ Missing token. Please log in again.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch('http://localhost:4000/api/user/request-reward', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ email, wallet, amount, reason }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage('Reward point request submitted successfully! ✅');
+      const data = await requestRewardPoints(token, { email, wallet, amount, reason });
+      if (data.success) {
+        setMessage('✅ Reward point request submitted!');
         setAmount('');
         setReason('');
       } else {
-        setMessage(`❌ Error: ${data.message}`);
+        setMessage(`❌ ${data.message || 'Request failed.'}`);
       }
     } catch (err) {
-      setMessage('❌ Failed to submit request.');
+      setMessage('❌ Server error.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +57,7 @@ export default function RequestRewardPage() {
   return (
     <main className="min-h-screen bg-black text-white px-6 py-10">
       <div className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Request Reward Points (Based on Payment)</h1>
+        <h1 className="text-3xl font-bold mb-6">Request Reward Points</h1>
 
         <form onSubmit={handleSubmit} className="bg-white/10 p-6 rounded-lg border border-gray-700">
           <div className="mb-4">
@@ -69,7 +68,7 @@ export default function RequestRewardPage() {
               onChange={(e) => setAmount(e.target.value)}
               required
               className="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600"
-              placeholder="Enter amount paid (₹ or $)"
+              placeholder="e.g., 100"
             />
           </div>
 

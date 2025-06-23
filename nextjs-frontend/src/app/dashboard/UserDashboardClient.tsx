@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Navbar from "../components/navbar"; // ✅ Ensure correct path
-import axios from "axios";
+import Navbar from "../components/navbar";
+import { getNFTStatus, requestMint, createCheckoutSession } from "../utils/api";
 
 export default function UserDashboard() {
   const router = useRouter();
@@ -50,12 +50,9 @@ export default function UserDashboard() {
   const fetchNFTStatus = async () => {
     try {
       const token = sessionStorage.getItem("token");
-      const res = await axios.get("http://localhost:4000/api/user/nft-status", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setNftData(res.data);
+      if (!token) return;
+      const data = await getNFTStatus(token);
+      setNftData(data);
     } catch (err) {
       console.error("Failed to fetch NFT status:", err);
       setNftData(null);
@@ -84,20 +81,8 @@ export default function UserDashboard() {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/user/request-mint", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMintMessage("✅ Mint request sent successfully!");
-      } else {
-        setMintError(data.error || "Mint request failed");
-      }
+      const res = await requestMint(token);
+      setMintMessage(res.message || "✅ Mint request sent successfully!");
     } catch (err) {
       setMintError("Server error");
     }
@@ -114,19 +99,10 @@ export default function UserDashboard() {
 
     try {
       const token = sessionStorage.getItem("token");
+      if (!token) return;
 
-      const res = await fetch("http://localhost:4000/api/user/create-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: Number(amount) }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.url) {
+      const data = await createCheckoutSession(token, Number(amount));
+      if (data.url) {
         window.location.href = data.url;
       } else {
         setPayMessage(data.message || "Something went wrong");
@@ -179,6 +155,7 @@ export default function UserDashboard() {
             </div>
           ))}
         </div>
+
         {/* NFT Modal */}
         {showNFTModal && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">

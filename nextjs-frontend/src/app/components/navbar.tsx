@@ -8,6 +8,7 @@ declare global {
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { loginUser, signupUser } from '../utils/api'; // ✅ Import API functions
 
 interface NavbarProps {
   onDocsClick?: () => void;
@@ -30,9 +31,7 @@ export default function Navbar({ onDocsClick, onServicesClick }: NavbarProps) {
     const storedWallet = sessionStorage.getItem("wallet");
     if (storedWallet) setWalletAddress(storedWallet);
 
-    const handleScroll = () => {
-      setIsSticky(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsSticky(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -52,14 +51,8 @@ export default function Navbar({ onDocsClick, onServicesClick }: NavbarProps) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
+      const data = await loginUser(email, password); // ✅ Use centralized API call
+      if (data.token) {
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("email", data.email);
@@ -80,14 +73,8 @@ export default function Navbar({ onDocsClick, onServicesClick }: NavbarProps) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:4000/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, wallet }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
+      const data = await signupUser(email, password, wallet); // ✅ Use centralized API call
+      if (data.success || data.token) {
         alert("Signup successful!");
         setShowSignupModal(false);
         setShowLoginModal(true);

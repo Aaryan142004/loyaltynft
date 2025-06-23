@@ -74,3 +74,19 @@ export const approveRequest = async (token: string, requestId: string) => {
   if (!res.ok) throw new Error("Approval failed");
   return res.json();
 };
+
+// ✅ Request reward points
+export const requestRewardPoints = async (
+  token: string,
+  body: { email: string; wallet: string; amount: string; reason: string }
+) => {
+  const res = await fetch(`${API}/user/request-reward`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+};

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { getNFTStatus } from '../utils/api';
 
 export default function NFTStatus() {
   const [nft, setNft] = useState<any>(null);
@@ -11,10 +11,8 @@ export default function NFTStatus() {
     setLoading(true);
     try {
       const token = sessionStorage.getItem('token');
-      const res = await axios.get('http://localhost:4000/api/user/nft-status', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNft(res.data);
+      const res = await getNFTStatus(token!);
+      setNft(res);
     } catch (err) {
       console.error('Failed to fetch NFT status:', err);
     } finally {
