@@ -45,9 +45,19 @@ export default function NFTStatus() {
             <p className="mb-2">
               <span className="font-semibold">Token ID:</span> {nft.tokenId}
             </p>
-            <p className="mb-4">
+            <p className="mb-2">
               <span className="font-semibold">Points:</span> {nft.points}
             </p>
+
+            {/* ✅ zkEVM Explorer link */}
+            <a
+              href={`https://cardona-zkevm.polygonscan.com/token/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8?a=${nft.tokenId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-400 underline text-sm block mt-2"
+            >
+              🔗 View on zkEVM Explorer
+            </a>
           </>
         ) : (
           <p>No NFT found for this wallet.</p>
