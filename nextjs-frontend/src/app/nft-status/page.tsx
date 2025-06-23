@@ -35,17 +35,6 @@ export default function NFTStatus() {
           <p>Loading...</p>
         ) : nft?.hasNFT ? (
           <>
-            {/* 🔍 Image block is optional */}
-            {nft.image ? (
-              <img
-                src={nft.image}
-                alt="NFT"
-                className="rounded-xl w-full mb-4"
-              />
-            ) : (
-              <p className="text-sm text-yellow-300 mb-4">⚠️ NFT metadata not found</p>
-            )}
-
             <p className="mb-2">
               <span className="font-semibold">Token ID:</span> {nft.tokenId}
             </p>
@@ -53,14 +42,13 @@ export default function NFTStatus() {
               <span className="font-semibold">Points:</span> {nft.points}
             </p>
 
-            {/* ✅ Always show explorer link if NFT is present */}
             <a
-              href={`https://cardona-zkevm.polygonscan.com/token/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8?a=${nft.tokenId}`}
+              href="https://cardona-zkevm.polygonscan.com/address/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8#tokentxns"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-400 underline text-sm block mt-2"
             >
-              🔗 View on zkEVM Explorer
+              🔗 View Contract on zkEVM Explorer
             </a>
           </>
         ) : (
