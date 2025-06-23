@@ -35,13 +35,18 @@ export default function NFTStatus() {
           <p>Loading...</p>
         ) : nft?.hasNFT ? (
           <>
-            {nft.image && (
+            {nft.image ? (
               <img
                 src={nft.image}
                 alt="NFT"
                 className="rounded-xl w-full mb-4"
               />
+            ) : (
+              <div className="text-yellow-400 text-sm mb-4">
+                ⚠️ Metadata image unavailable, but NFT is minted.
+              </div>
             )}
+
             <p className="mb-2">
               <span className="font-semibold">Token ID:</span> {nft.tokenId}
             </p>
