@@ -62,39 +62,48 @@ router.post('/create-checkout', auth, async (req, res) => {
 });
 
 // ✅ NFT Status
+// ✅ NFT Status (with try-catch to prevent 502)
 router.get('/nft-status', auth, async (req, res) => {
-  const { web3, contract } = require('../utils/web3');
-  const axios = require('axios');
-  const User = require('../models/User');
+  try {
+    const { web3, contract } = require('../utils/web3');
+    const axios = require('axios');
+    const User = require('../models/User');
 
-  const user = await User.findById(req.userId);
-  if (!user || !user.wallet) return res.status(400).json({ error: 'No wallet associated' });
+    const user = await User.findById(req.userId);
+    if (!user || !user.wallet)
+      return res.status(400).json({ error: 'No wallet associated' });
 
-  const balance = await contract.methods.balanceOf(user.wallet).call();
-  if (Number(balance) === 0) return res.json({ hasNFT: false });
+    const balance = await contract.methods.balanceOf(user.wallet).call();
+    if (Number(balance) === 0) return res.json({ hasNFT: false });
 
-  const maxTokenId = await contract.methods.tokenCounter().call();
-  for (let i = Number(maxTokenId) - 1; i > 0; i--) {
-    try {
-      const owner = await contract.methods.ownerOf(i).call();
-      if (owner.toLowerCase() === user.wallet.toLowerCase()) {
-        const points = await contract.methods.getPoints(i).call();
-        const tokenURI = await contract.methods.tokenURI(i).call();
-        let image = null;
-        try {
-          const meta = await axios.get(tokenURI);
-          image = meta.data?.image || null;
-        } catch {}
-        return res.json({ hasNFT: true, tokenId: String(i), points: String(points), image });
+    const maxTokenId = await contract.methods.tokenCounter().call();
+    for (let i = Number(maxTokenId) - 1; i > 0; i--) {
+      try {
+        const owner = await contract.methods.ownerOf(i).call();
+        if (owner.toLowerCase() === user.wallet.toLowerCase()) {
+          const points = await contract.methods.getPoints(i).call();
+          const tokenURI = await contract.methods.tokenURI(i).call();
+          let image = null;
+          try {
+            const meta = await axios.get(tokenURI);
+            image = meta.data?.image || null;
+          } catch {}
+          return res.json({ hasNFT: true, tokenId: String(i), points: String(points), image });
+        }
+      } catch (innerErr) {
+        console.error(`Failed ownerOf(${i}):`, innerErr);
       }
-    } catch {}
-  }
+    }
 
-  return res.json({
-    hasNFT: true,
-    balance: String(balance),
-    message: "User has NFT(s) but specific token details could not be retrieved"
-  });
+    return res.json({
+      hasNFT: true,
+      balance: String(balance),
+      message: "User has NFT(s) but specific token details could not be retrieved"
+    });
+  } catch (err) {
+    console.error('❌ Error in /nft-status:', err.message);
+    return res.status(502).json({ error: 'Failed to fetch NFT status' });
+  }
 });
 
 // ✅ Simulate payment

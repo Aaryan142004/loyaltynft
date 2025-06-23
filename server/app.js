@@ -12,10 +12,11 @@ const Request = require('./models/Request');
 
 const app = express();
 
-// ✅ CORS Setup
+// ✅ CORS Setup (allow both local and Vercel frontend)
 const allowedOrigins = [
   'http://localhost:3000',
   'https://loyaltynft.vercel.app',
+  'https://loyaltynft.vercel.app/'
 ];
 app.use(cors({
   origin: allowedOrigins,
@@ -23,7 +24,14 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Apply express.raw() ONLY for Stripe webhook, otherwise use express.json()
+// ✅ Fallback manual CORS headers (just in case)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://loyaltynft.vercel.app");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
+});
+
+// ✅ Use raw body for Stripe webhook only
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/user/webhook') {
     express.raw({ type: 'application/json' })(req, res, next);
@@ -32,7 +40,7 @@ app.use((req, res, next) => {
   }
 });
 
-// ✅ Stripe webhook handler
+// ✅ Stripe webhook for payment capture
 app.post('/api/user/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
@@ -64,12 +72,12 @@ app.post('/api/user/webhook', async (req, res) => {
   }
 });
 
-// ✅ MongoDB Connection
+// ✅ Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ Debug log for envs (optional)
+// ✅ Debug env logs (for Render troubleshooting)
 console.log('✅ Backend ENV loaded:', {
   PORT: process.env.PORT,
   MONGO_URI: !!process.env.MONGO_URI,
@@ -77,12 +85,12 @@ console.log('✅ Backend ENV loaded:', {
   RENDER: !!process.env.RENDER,
 });
 
-// ✅ API Routes
+// ✅ Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ✅ Server Start
+// ✅ Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
