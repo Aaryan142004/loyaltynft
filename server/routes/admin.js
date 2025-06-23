@@ -1,146 +1,159 @@
-require('dotenv').config();
-
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const Request = require('../models/Request');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const User = require('../models/User');
+const { contract, web3, getAdminAccount } = require('../utils/web3');
+require('dotenv').config({ path: '../../.env' });
 
 const router = express.Router();
 
-// Middleware to auth user
-const auth = (req, res, next) => {
+// ✅ Middleware to auth admin with better debugging
+const authAdmin = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
+
+  if (!token) {
+    console.log("❌ No token found in Authorization header.");
+    return res.status(401).json({ error: 'No token' });
+  }
+
   try {
     const { id, role } = jwt.verify(token, process.env.JWT_SECRET);
-    if (role !== 'user') throw Error();
-    req.userId = id;
+    console.log("✅ Decoded token:", { id, role });
+
+    if (role !== 'admin') {
+      console.log("❌ Token role is not admin.");
+      return res.status(403).json({ error: 'Forbidden: not admin' });
+    }
+
+    req.adminId = id;
     next();
-  } catch {
-    res.status(403).json({ error: 'Forbidden' });
+  } catch (err) {
+    console.error("❌ Token verification failed:", err.message);
+    res.status(403).json({ error: 'Forbidden: invalid token' });
   }
 };
 
-// ✅ Request mint
-router.post('/request-mint', auth, async (req, res) => {
-  const reqDoc = await Request.create({ type: 'mint', user: req.userId });
-  res.json({ message: 'Mint request sent' });
-});
-
-// ✅ Stripe Checkout
-router.post('/create-checkout', auth, async (req, res) => {
-  const { amount } = req.body;
-  const success_url = `${process.env.SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}`;
-  const cancel_url = process.env.CANCEL_URL;
+// ✅ Fetch pending requests
+router.get('/requests/:type', authAdmin, async (req, res) => {
+  const { type } = req.params;
+  console.log(`✅ Received request for /requests/${type}`);
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Loyalty Points' },
-          unit_amount: amount * 100
-        },
-        quantity: 1
-      }],
-      mode: 'payment',
-      success_url,
-      cancel_url,
-      client_reference_id: req.userId,
-      metadata: {
-        userId: req.userId
+    const list = await Request.find({ type, status: 'pending' }).populate('user', 'email wallet');
+    console.log(`✅ Found ${list.length} '${type}' requests`);
+    res.json(list);
+  } catch (err) {
+    console.error("❌ Error fetching requests:", err.message);
+    res.status(500).json({ error: 'Failed to fetch requests' });
+  }
+});
+
+// ✅ Approve route (no change)
+router.post('/approve', authAdmin, async (req, res) => {
+  const adminAccount = getAdminAccount();
+
+  try {
+    const { requestId } = req.body;
+    const reqDoc = await Request.findById(requestId).populate('user');
+    if (!reqDoc) return res.status(404).json({ error: 'Request not found' });
+
+    if (reqDoc.type === 'mint') {
+      console.log('Processing mint request for user:', reqDoc.user.email);
+      const tx = contract.methods.mintNFT(reqDoc.user.wallet);
+      const gas = await tx.estimateGas({ from: adminAccount.address });
+      const gasPrice = await web3.eth.getGasPrice();
+      const data = tx.encodeABI();
+
+      const signedMint = await web3.eth.accounts.signTransaction({
+        from: adminAccount.address,
+        to: contract.options.address,
+        data,
+        gas: Math.round(Number(gas) * 1.2),
+        gasPrice: gasPrice.toString()
+      }, adminAccount.privateKey);
+
+      const mintReceipt = await web3.eth.sendSignedTransaction(signedMint.rawTransaction);
+      console.log('✅ Minted NFT tx:', mintReceipt.transactionHash);
+
+    } else if (reqDoc.type === 'payment') {
+      console.log('Processing payment request for user:', reqDoc.user.email);
+
+      try {
+        let tokenId = await contract.methods.walletToToken(reqDoc.user.wallet).call();
+
+        if (!tokenId || Number(tokenId) === 0) {
+          console.log('Mapping not found, scanning tokens...');
+          const maxTokenId = await contract.methods.tokenCounter().call();
+          let userTokenId = null;
+
+          for (let i = Number(maxTokenId) - 1; i > 0; i--) {
+            try {
+              const owner = await contract.methods.ownerOf(i).call();
+              if (owner.toLowerCase() === reqDoc.user.wallet.toLowerCase()) {
+                userTokenId = i;
+                break;
+              }
+            } catch {}
+          }
+
+          if (!userTokenId) {
+            return res.status(404).json({ error: 'Token not found for user' });
+          }
+
+          console.log('Fixing token mapping...');
+          const fixTx = contract.methods.fixWalletToTokenMapping(reqDoc.user.wallet, userTokenId);
+          const fixGas = await fixTx.estimateGas({ from: adminAccount.address });
+          const fixData = fixTx.encodeABI();
+          const fixGasPrice = await web3.eth.getGasPrice();
+
+          const signedFix = await web3.eth.accounts.signTransaction({
+            from: adminAccount.address,
+            to: contract.options.address,
+            data: fixData,
+            gas: Math.round(Number(fixGas) * 1.2),
+            gasPrice: fixGasPrice.toString()
+          }, adminAccount.privateKey);
+
+          await web3.eth.sendSignedTransaction(signedFix.rawTransaction);
+          tokenId = userTokenId;
+        }
+
+        const pointsTx = contract.methods.addPointsToNFT(Number(tokenId), reqDoc.amount);
+        const pointsGas = await pointsTx.estimateGas({ from: adminAccount.address });
+        const pointsData = pointsTx.encodeABI();
+        const pointsGasPrice = await web3.eth.getGasPrice();
+
+        const signedPoints = await web3.eth.accounts.signTransaction({
+          from: adminAccount.address,
+          to: contract.options.address,
+          data: pointsData,
+          gas: Math.round(Number(pointsGas) * 1.2),
+          gasPrice: pointsGasPrice.toString()
+        }, adminAccount.privateKey);
+
+        await web3.eth.sendSignedTransaction(signedPoints.rawTransaction);
+        console.log('✅ Added points to token:', tokenId);
+
+      } catch (error) {
+        console.error('❌ Error during payment approval:', error);
+        return res.status(500).json({ error: `Failed to process payment: ${error.message}` });
       }
-    });
-
-    console.log('Stripe session created:', session.id);
-    res.json({ url: session.url });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ✅ NFT Status
-router.get('/nft-status', auth, async (req, res) => {
-  const { web3, contract } = require('../utils/web3');
-  const axios = require('axios');
-  const User = require('../models/User');
-
-  const user = await User.findById(req.userId);
-  if (!user || !user.wallet) return res.status(400).json({ error: 'No wallet associated' });
-
-  const balance = await contract.methods.balanceOf(user.wallet).call();
-  if (Number(balance) === 0) return res.json({ hasNFT: false });
-
-  const maxTokenId = await contract.methods.tokenCounter().call();
-  for (let i = Number(maxTokenId) - 1; i > 0; i--) {
-    try {
-      const owner = await contract.methods.ownerOf(i).call();
-      if (owner.toLowerCase() === user.wallet.toLowerCase()) {
-        const points = await contract.methods.getPoints(i).call();
-        const tokenURI = await contract.methods.tokenURI(i).call();
-        let image = null;
-        try {
-          const meta = await axios.get(tokenURI);
-          image = meta.data?.image || null;
-        } catch {}
-        return res.json({ hasNFT: true, tokenId: String(i), points: String(points), image });
-      }
-    } catch {}
-  }
-
-  return res.json({
-    hasNFT: true,
-    balance: String(balance),
-    message: "User has NFT(s) but specific token details could not be retrieved"
-  });
-});
-
-// ✅ Simulate payment
-router.post('/simulate-payment', auth, async (req, res) => {
-  const { amount } = req.body;
-  try {
-    const reqDoc = await Request.create({
-      type: 'payment',
-      user: req.userId,
-      amount: Number(amount),
-      status: 'pending'
-    });
-    res.json({ success: true, message: 'Simulated payment created', requestId: reqDoc._id });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ✅ Reward request
-router.post("/request-reward", async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Missing token" });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { email, wallet, amount, reason } = req.body;
-
-    if (!email || !wallet || !amount || !reason) {
-      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const newRequest = new Request({
-      email,
-      wallet,
-      amount,
-      reason,
-      type: "reward",
-      status: "pending"
-    });
+    reqDoc.status = 'approved';
+    await reqDoc.save();
+    res.json({ message: 'Approved' });
 
-    await newRequest.save();
-    res.status(201).json({ message: "Reward request submitted successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+  } catch (error) {
+    console.error('❌ Error in approval process:', error);
+    res.status(500).json({ error: `Approval failed: ${error.message}` });
   }
+});
+
+// ✅ Reject route (no change)
+router.post('/reject', authAdmin, async (req, res) => {
+  await Request.findByIdAndUpdate(req.body.requestId, { status: 'rejected' });
+  res.json({ message: 'Rejected' });
 });
 
 module.exports = router;
