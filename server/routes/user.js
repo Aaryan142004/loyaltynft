@@ -62,10 +62,10 @@ router.post('/create-checkout', auth, async (req, res) => {
 });
 
 // ✅ NFT Status (with logs)
+// ✅ NFT Status (lightweight version)
 router.get('/nft-status', auth, async (req, res) => {
   try {
     const { web3, contract } = require('../utils/web3');
-    const axios = require('axios');
     const User = require('../models/User');
 
     console.log("🔐 Connected to RPC:", process.env.PROVIDER_URL);
@@ -91,19 +91,10 @@ router.get('/nft-status', auth, async (req, res) => {
         const owner = await contract.methods.ownerOf(i).call();
         if (owner.toLowerCase() === user.wallet.toLowerCase()) {
           const points = await contract.methods.getPoints(i).call();
-          const tokenURI = await contract.methods.tokenURI(i).call();
-          let image = null;
-          try {
-            const meta = await axios.get(tokenURI);
-            image = meta.data?.image || null;
-          } catch (fetchErr) {
-            console.warn(`⚠️ Could not fetch tokenURI metadata for token ${i}:`, fetchErr.message);
-          }
           return res.json({
             hasNFT: true,
             tokenId: String(i),
             points: String(points),
-            image
           });
         }
       } catch (innerErr) {

@@ -1,19 +1,21 @@
+// ✅ Final Solidity - Without tokenURI
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract LoyaltyNFT is ERC721, Ownable {
     uint256 public tokenCounter;
     mapping(uint256 => uint256) public points;
     mapping(address => uint256) public walletToToken;
 
-      string public baseURI
-    
-    // Add event for token transfers for off-chain tracking
+    // Optional: keep or remove if not used
+    string public baseURI;
+
     event TokenTransferred(address indexed from, address indexed to, uint256 indexed tokenId);
-  ;
+
     constructor(string memory _baseURI) ERC721("LoyaltyNFT", "LNFT") {
         baseURI = _baseURI;
         tokenCounter = 1;
@@ -26,11 +28,13 @@ contract LoyaltyNFT is ERC721, Ownable {
         tokenCounter++;
         return tokenId;
     }
-     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "Token doesn't exist");
-        return string(abi.encodePacked(baseURI, Strings.toString(tokenId), ".json"));
-    }
-    
+
+    // ❌ Remove this if not needed
+    // function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    //     require(_exists(tokenId), "Token doesn't exist");
+    //     return string(abi.encodePacked(baseURI, Strings.toString(tokenId), ".json"));
+    // }
+
     function addPointsToNFT(uint256 tokenId, uint256 _points) public onlyOwner {
         require(_exists(tokenId), "Token doesn't exist");
         points[tokenId] += _points;
@@ -51,66 +55,37 @@ contract LoyaltyNFT is ERC721, Ownable {
         return tokenId;
     }
 
-    // Instead of overriding _transfer, use a new function to update mappings
-    function safeTransferWithMapping(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public {
-        // First perform the transfer
+    function safeTransferWithMapping(address from, address to, uint256 tokenId) public {
         safeTransferFrom(from, to, tokenId);
-        
-        // Then update our mappings
         updateTokenMapping(from, to, tokenId);
     }
 
-    function transferWithMapping(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public {
-        // First perform the transfer
+    function transferWithMapping(address from, address to, uint256 tokenId) public {
         transferFrom(from, to, tokenId);
-        
-        // Then update our mappings
         updateTokenMapping(from, to, tokenId);
     }
-    
-    // Helper function to update mappings
+
     function updateTokenMapping(address from, address to, uint256 tokenId) internal {
         if (from != address(0)) {
-            walletToToken[from] = 0; // Clear previous owner's mapping
+            walletToToken[from] = 0;
         }
-        walletToToken[to] = tokenId; // Set new owner's mapping
-        
+        walletToToken[to] = tokenId;
         emit TokenTransferred(from, to, tokenId);
     }
-    
-    // Add a function to manually fix wallet mappings when needed
+
     function fixWalletToTokenMapping(address wallet, uint256 tokenId) public onlyOwner {
         require(_exists(tokenId), "Token doesn't exist");
         require(_ownerOf(tokenId) == wallet, "Wallet is not the owner of token");
         walletToToken[wallet] = tokenId;
     }
-    
-    // Hook into ERC721 _beforeTokenTransfer (which is virtual)
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 firstTokenId,
-        uint256 batchSize
-    ) internal virtual override {
+
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize)
+        internal
+        virtual
+        override
+    {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-        
-        // Update our mapping when tokens transfer
-        // Skip during minting (from == address(0)) as mintNFT already handles this
-        if (from != address(0)) {
-            walletToToken[from] = 0; // Clear previous owner's mapping
-        }
-        
-        // Always update the recipient's mapping
-        if (to != address(0)) { // Skip during burning
-            walletToToken[to] = firstTokenId;
-        }
+        if (from != address(0)) walletToToken[from] = 0;
+        if (to != address(0)) walletToToken[to] = firstTokenId;
     }
 }
