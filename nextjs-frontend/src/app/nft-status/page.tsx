@@ -35,6 +35,7 @@ export default function NFTStatus() {
           <p>Loading...</p>
         ) : nft?.hasNFT ? (
           <>
+            {/* 🔍 Image block is optional */}
             {nft.image ? (
               <img
                 src={nft.image}
@@ -42,9 +43,7 @@ export default function NFTStatus() {
                 className="rounded-xl w-full mb-4"
               />
             ) : (
-              <div className="text-yellow-400 text-sm mb-4">
-                ⚠️ Metadata image unavailable, but NFT is minted.
-              </div>
+              <p className="text-sm text-yellow-300 mb-4">⚠️ NFT metadata not found</p>
             )}
 
             <p className="mb-2">
@@ -54,7 +53,7 @@ export default function NFTStatus() {
               <span className="font-semibold">Points:</span> {nft.points}
             </p>
 
-            {/* ✅ zkEVM Explorer link */}
+            {/* ✅ Always show explorer link if NFT is present */}
             <a
               href={`https://cardona-zkevm.polygonscan.com/token/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8?a=${nft.tokenId}`}
               target="_blank"
