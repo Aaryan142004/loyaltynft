@@ -166,14 +166,13 @@ export default function UserDashboard() {
                   <p className="mb-2"><strong>Token ID:</strong> {nftData.tokenId}</p>
                   <p className="mb-2"><strong>Points:</strong> {nftData.points}</p>
 
-{/* 🔗 zkEVM Contract Activity Link */}
 <a
-  href="https://cardona-zkevm.polygonscan.com/address/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8#tokentxns"
+  href={`https://cardona-zkevm.polygonscan.com/token/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8?a=${nftData.tokenId}`}
   target="_blank"
   rel="noopener noreferrer"
   className="text-purple-400 underline text-sm block my-3"
 >
-  🔗 View Contract Activity on zkEVM Explorer
+  🔗 View Token #{nftData.tokenId} on zkEVM Explorer
 </a>
 
 {nftData.image && <img src={nftData.image} alt="NFT" className="mx-auto rounded-lg mt-4" />}
