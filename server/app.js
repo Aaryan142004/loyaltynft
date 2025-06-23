@@ -24,10 +24,16 @@ app.use(cors({
   credentials: true,
 }));
 
-// ✅ Fallback manual CORS headers (just in case)
+// ✅ Manual fallback for CORS preflight (IMPORTANT FIX)
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "https://loyaltynft.vercel.app");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
   next();
 });
 
@@ -40,7 +46,7 @@ app.use((req, res, next) => {
   }
 });
 
-// ✅ Stripe webhook for payment capture
+// ✅ Stripe webhook to log successful payment
 app.post('/api/user/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
@@ -78,6 +84,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // ✅ Debug env logs (for Render troubleshooting)
+console.log('🔍 Loaded PROVIDER_URL:', process.env.PROVIDER_URL);
 console.log('✅ Backend ENV loaded:', {
   PORT: process.env.PORT,
   MONGO_URI: !!process.env.MONGO_URI,
