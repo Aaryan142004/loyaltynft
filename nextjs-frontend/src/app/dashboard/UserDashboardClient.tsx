@@ -165,7 +165,19 @@ export default function UserDashboard() {
                 <div className="text-center">
                   <p className="mb-2"><strong>Token ID:</strong> {nftData.tokenId}</p>
                   <p className="mb-2"><strong>Points:</strong> {nftData.points}</p>
-                  {nftData.image && <img src={nftData.image} alt="NFT" className="mx-auto rounded-lg mt-4" />}
+
+{/* 🔗 zkEVM Contract Activity Link */}
+<a
+  href="https://cardona-zkevm.polygonscan.com/address/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8#tokentxns"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-purple-400 underline text-sm block my-3"
+>
+  🔗 View Contract Activity on zkEVM Explorer
+</a>
+
+{nftData.image && <img src={nftData.image} alt="NFT" className="mx-auto rounded-lg mt-4" />}
+
                 </div>
               ) : (
                 <p className="text-center">No NFT found for your wallet.</p>
