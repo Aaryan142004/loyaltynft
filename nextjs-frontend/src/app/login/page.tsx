@@ -90,7 +90,8 @@
 'use client';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginUser } from "../utils/api";
+import { loginUser } from "@/app/utils/api"; // ✅ absolute path is safest
+
 
 export default function LoginPage() {
   const router = useRouter();

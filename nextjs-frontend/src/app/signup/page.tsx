@@ -86,7 +86,8 @@
 
 "use client";
 import { useState } from "react";
-import { signupUser } from "../utils/api";
+import { signupUser } from "@/app/utils/api";
+
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
