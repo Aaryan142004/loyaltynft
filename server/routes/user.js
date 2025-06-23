@@ -61,22 +61,31 @@ router.post('/create-checkout', auth, async (req, res) => {
   }
 });
 
-// ✅ NFT Status
-// ✅ NFT Status (with try-catch to prevent 502)
+// ✅ NFT Status (with logs)
 router.get('/nft-status', auth, async (req, res) => {
   try {
     const { web3, contract } = require('../utils/web3');
     const axios = require('axios');
     const User = require('../models/User');
 
+    console.log("🔐 Connected to RPC:", process.env.PROVIDER_URL);
+
     const user = await User.findById(req.userId);
-    if (!user || !user.wallet)
+    if (!user || !user.wallet) {
+      console.error("❌ No wallet found for user");
       return res.status(400).json({ error: 'No wallet associated' });
+    }
+
+    console.log("📥 Checking balance for wallet:", user.wallet);
 
     const balance = await contract.methods.balanceOf(user.wallet).call();
+    console.log("💰 NFT Balance:", balance);
+
     if (Number(balance) === 0) return res.json({ hasNFT: false });
 
     const maxTokenId = await contract.methods.tokenCounter().call();
+    console.log("🔢 tokenCounter:", maxTokenId);
+
     for (let i = Number(maxTokenId) - 1; i > 0; i--) {
       try {
         const owner = await contract.methods.ownerOf(i).call();
@@ -87,19 +96,26 @@ router.get('/nft-status', auth, async (req, res) => {
           try {
             const meta = await axios.get(tokenURI);
             image = meta.data?.image || null;
-          } catch {}
-          return res.json({ hasNFT: true, tokenId: String(i), points: String(points), image });
+          } catch (fetchErr) {
+            console.warn(`⚠️ Could not fetch tokenURI metadata for token ${i}:`, fetchErr.message);
+          }
+          return res.json({
+            hasNFT: true,
+            tokenId: String(i),
+            points: String(points),
+            image
+          });
         }
       } catch (innerErr) {
-        console.error(`Failed ownerOf(${i}):`, innerErr);
+        console.warn(`⚠️ ownerOf(${i}) failed:`, innerErr.message);
       }
     }
 
     return res.json({
-      hasNFT: true,
-      balance: String(balance),
-      message: "User has NFT(s) but specific token details could not be retrieved"
+      hasNFT: false,
+      message: "No NFT found matching user's wallet"
     });
+
   } catch (err) {
     console.error('❌ Error in /nft-status:', err.message);
     return res.status(502).json({ error: 'Failed to fetch NFT status' });

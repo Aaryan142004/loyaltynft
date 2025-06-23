@@ -4,6 +4,8 @@ const path = require("path");
 require("dotenv").config({ path: "../../.env" }); // ✅ Redundant but harmless here
 
 const web3 = new Web3(process.env.PROVIDER_URL);
+console.log("🔍 Loaded PROVIDER_URL:", process.env.PROVIDER_URL);
+
 
 // ✅ Load ABI and contract
 const abi = JSON.parse(
