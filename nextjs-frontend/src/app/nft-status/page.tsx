@@ -42,13 +42,14 @@ export default function NFTStatus() {
               <span className="font-semibold">Points:</span> {nft.points}
             </p>
 
+            {/* 🔗 Contract Transactions on zkEVM */}
             <a
               href="https://cardona-zkevm.polygonscan.com/address/0x88D95DC8f2b1feFdF97c8A269d16Ac0447a593B8#tokentxns"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-400 underline text-sm block mt-2"
             >
-              🔗 View Contract on zkEVM Explorer
+              🔗 View Contract Transactions on zkEVM Explorer
             </a>
           </>
         ) : (
