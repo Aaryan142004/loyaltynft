@@ -17,15 +17,23 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://loyaltynft.vercel.app',
 ];
-
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
 
-// ✅ Stripe webhook: raw body ONLY for this route
-app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+// ✅ Apply express.raw() ONLY for Stripe webhook, otherwise use express.json()
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/user/webhook') {
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+// ✅ Stripe webhook handler
+app.post('/api/user/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   try {
@@ -56,15 +64,12 @@ app.post('/api/user/webhook', express.raw({ type: 'application/json' }), async (
   }
 });
 
-// ✅ JSON parser (after webhook)
-app.use(express.json());
-
 // ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ Log loaded envs for debugging (optional)
+// ✅ Debug log for envs (optional)
 console.log('✅ Backend ENV loaded:', {
   PORT: process.env.PORT,
   MONGO_URI: !!process.env.MONGO_URI,
@@ -77,7 +82,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ✅ Server Start (for Render or local)
+// ✅ Server Start
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
