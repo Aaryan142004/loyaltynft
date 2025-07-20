@@ -356,13 +356,13 @@ function DashboardPageContent() {
         </div>
         <div className="space-y-6 w-full md:w-1/2">
           {[
-            { label: "Mint NFTs",     path: "/dashboard" },
-            { label: "Make Payments", path: "/dashboard" },
-            { label: "Admin Panel",   path: "/admin-dashboard" },
+            { label: "Mint NFTs" },
+            { label: "Make Payments" },
+            { label: "Admin Panel"},
           ].map((f, i) => (
             <div
               key={i}
-              onClick={() => (window.location.href = f.path)}
+             // onClick={() => (window.location.href = f.path)}
               className="bg-gray-900 border border-gray-700 p-4 rounded-xl hover:border-purple-600 transition"
             >
               <p className="text-lg font-medium">{f.label}</p>
