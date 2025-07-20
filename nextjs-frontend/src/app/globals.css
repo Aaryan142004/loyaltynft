@@ -4,31 +4,32 @@
 
 @keyframes gradient-xy {
   0%, 100% { background-position: left top; }
-  50% { background-position: right bottom; }
+  50%      { background-position: right bottom; }
 }
 
-/* Fix 3D flip */
+/* =======================================================
+   Workflow card flip styles
+   ======================================================= */
 .perspective {
   perspective: 1000px;
 }
 
 .card-flip {
-  transform-style: preserve-3d;
-  transition: transform 0.6s;
   position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease-in-out;
 }
 
-.card-flip:hover {
+/* only flips when JS toggles the class */
+.card-flip.flipped {
   transform: rotateY(180deg);
 }
 
-.card-face {
-  backface-visibility: hidden;
+.card-front,
+.card-back {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  backface-visibility: hidden;
   border-radius: 1rem;
   display: flex;
   flex-direction: column;
@@ -39,4 +40,47 @@
 
 .card-back {
   transform: rotateY(180deg);
+}
+
+/* =======================================================
+   Animated gradient text and fancy underline
+   ======================================================= */
+.gradient-text {
+  background: linear-gradient(90deg, #ec4899, #8b5cf6, #22d3ee);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: gradient-xy 6s ease infinite;
+}
+
+.fancy-heading {
+  position: relative;
+  display: inline-block;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.fancy-heading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -0.25em;
+  width: 0;
+  height: 4px;
+  background: #ec4899;
+  border-radius: 2px;
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.fancy-heading:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+/* Responsive font‐sizing for headings */
+@media (min-width: 768px) {
+  .fancy-heading { font-size: 4rem; }
+}
+@media (max-width: 767px) {
+  .fancy-heading { font-size: 2.5rem; }
 }
