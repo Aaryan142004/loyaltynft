@@ -508,7 +508,7 @@ function DashboardPageContent() {
           ))}
         </div>
         <p className="mt-10 text-lg text-gray-400">
-          Ready to see it live? Connect your wallet and take it for a spin! 🚀
+          Ready to see it live? Connect your wallet and take it for a spin! 
         </p>
       </section>
  {/* Stats */}
@@ -528,7 +528,7 @@ function DashboardPageContent() {
           </div>
         </div>
         <p className="text-gray-400 text-xl mt-6">
-          Ready to dive in? Connect your wallet and experience it yourself! 🚀
+          Ready to dive in? Connect your wallet and experience it yourself! 
         </p>
       </section>
       {/* Signup Modal */}
